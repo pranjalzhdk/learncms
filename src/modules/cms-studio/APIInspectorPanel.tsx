@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useContent } from "@/hooks/use-content";
 import { useUIStore } from "@/store/ui-store";
 import { LiveEventPanel } from "@/modules/api/LiveEventPanel";
@@ -16,13 +16,9 @@ function highlightJson(json: string) {
     .replace(/: (true|false)/g, ': <span class="text-rose-500">$1</span>');
 }
 
-export function APIInspectorPanel({ onAction }: { onAction?: (action: string) => void }) {
+export function APIInspectorPanel({ onAction: _onAction }: { onAction?: (action: string) => void }) {
   const { data, isLoading } = useContent();
   const schemaFields = useUIStore((s) => s.schemaFields);
-
-  useEffect(() => {
-    onAction?.("inspect-api");
-  }, [onAction]);
 
   const response = useMemo(() => ({
     data: data?.map((e) => {
