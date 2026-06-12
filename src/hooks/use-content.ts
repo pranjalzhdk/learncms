@@ -61,8 +61,17 @@ export function useDeleteContent() {
 
 export function usePublishedContent() {
   const { data, ...rest } = useContent();
+  const activeLocale = useUIStore((s) => s.activeLocale);
+  const unlockedFeatures = useUIStore((s) => s.unlockedFeatures);
+  const filterByLocale = unlockedFeatures.includes("language-switcher");
+
+  const published = data?.filter((e) => e.status === "PUBLISHED") ?? [];
+  const localized = filterByLocale
+    ? published.filter((e) => e.locale === activeLocale)
+    : published;
+
   return {
-    data: data?.filter((e) => e.status === "PUBLISHED") ?? [],
+    data: localized.length > 0 ? localized : published,
     allData: data ?? [],
     ...rest,
   };

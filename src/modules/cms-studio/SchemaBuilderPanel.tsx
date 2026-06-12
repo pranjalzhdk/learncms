@@ -4,8 +4,15 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { FIELD_TYPES } from "@/lib/constants/content-types";
 import { useUIStore } from "@/store/ui-store";
+import { actionMatchesStep } from "@/lib/lesson-actions";
 
-export function SchemaBuilderPanel({ onAction }: { onAction?: (action: string) => void }) {
+export function SchemaBuilderPanel({
+  onAction,
+  expectedAction,
+}: {
+  onAction?: (action: string) => void;
+  expectedAction?: string;
+}) {
   const schemaFields = useUIStore((s) => s.schemaFields);
   const addField = useUIStore((s) => s.addSchemaField);
   const [name, setName] = useState("");
@@ -21,15 +28,16 @@ export function SchemaBuilderPanel({ onAction }: { onAction?: (action: string) =
       fieldType,
       contentType: "blog-posts",
     });
-    onAction?.("open-modeling");
-    onAction?.("add-field");
+    if (!expectedAction || actionMatchesStep(expectedAction, "add-field")) {
+      onAction?.("add-field");
+    }
     setName("");
   };
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-neutral-500">
-        Content modeling lets you extend schemas without database migrations. New fields automatically appear in the editor, API, and frontend.
+        Content modeling lets you extend schemas without database migrations. New fields appear in the API inspector preview.
       </p>
 
       <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200">

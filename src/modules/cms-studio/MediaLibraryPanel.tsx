@@ -21,7 +21,6 @@ export function MediaLibraryPanel({ onAction }: { onAction?: (action: string) =>
   const addAsset = async (filename: string, assetUrl: string) => {
     await createMedia.mutateAsync({ filename, url: assetUrl, mimeType: "image/jpeg", size: 200000 });
     onAction?.("open-media");
-    onAction?.("add-image");
   };
 
   return (

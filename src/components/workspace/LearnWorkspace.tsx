@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { Globe, Sparkles, ChevronRight } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
 import {
@@ -10,6 +10,7 @@ import {
   getConceptProgress,
 } from "@/modules/lessons/lesson-definitions";
 import { CMS_CONCEPTS } from "@/lib/constants/content-types";
+import { actionMatchesStep } from "@/lib/lesson-actions";
 import { ImmersiveWebsite } from "@/modules/website/ImmersiveWebsite";
 import { LessonStepProgress } from "@/modules/lessons/LessonStepProgress";
 import { CMSStudio } from "@/modules/cms-studio/CMSStudio";
@@ -31,12 +32,20 @@ export function LearnWorkspace() {
   const disconnect = useUIStore((s) => s.disconnect);
   const xp = useUIStore((s) => s.xp);
 
-  const lesson = activeLessonSlug ? getLesson(activeLessonSlug) : getNextLesson(completedLessons);
-  const currentStep = lesson?.steps[activeStepIndex];
+  const advancingRef = useRef(false);
+
+  const nextLesson = getNextLesson(completedLessons);
+  const lesson =
+    (activeLessonSlug ? getLesson(activeLessonSlug) : null) ??
+    nextLesson ??
+    null;
+
+  const isLessonComplete = lesson ? completedLessons.includes(lesson.slug) : false;
+  const currentStep = lesson && !isLessonComplete ? lesson.steps[activeStepIndex] : undefined;
 
   useEffect(() => {
-    if (!activeLessonSlug && lesson) setActiveLesson(lesson.slug);
-  }, [activeLessonSlug, lesson, setActiveLesson]);
+    if (!activeLessonSlug && nextLesson) setActiveLesson(nextLesson.slug);
+  }, [activeLessonSlug, nextLesson, setActiveLesson]);
 
   useEffect(() => {
     if (currentStep?.studioView && currentStep.studioView !== activeStudioView) {
@@ -46,11 +55,13 @@ export function LearnWorkspace() {
 
   const checkStep = useCallback(
     (action: string) => {
-      if (!lesson || !currentStep) return;
-      const actionMatches =
-        currentStep.action === action ||
-        (currentStep.action === "create-title" && action === "edit-title");
-      if (!actionMatches) return;
+      if (!lesson || !currentStep || advancingRef.current) return;
+      if (!actionMatchesStep(currentStep.action, action)) return;
+
+      advancingRef.current = true;
+      requestAnimationFrame(() => {
+        advancingRef.current = false;
+      });
 
       if (activeStepIndex + 1 >= lesson.steps.length) {
         completeLesson(lesson.slug, lesson.xpReward, lesson.badge.slug, lesson.unlocks, lesson.unlockMessage);
@@ -60,6 +71,8 @@ export function LearnWorkspace() {
     },
     [lesson, currentStep, activeStepIndex, nextStep, completeLesson]
   );
+
+  const showMastery = !nextLesson && completedLessons.length === LESSONS.length;
 
   return (
     <>
@@ -114,7 +127,13 @@ export function LearnWorkspace() {
             })}
           </div>
 
-          {lesson && <LessonStepProgress lesson={lesson} activeStepIndex={activeStepIndex} />}
+          {lesson && currentStep && <LessonStepProgress lesson={lesson} activeStepIndex={activeStepIndex} />}
+
+          {isLessonComplete && lesson && (
+            <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+              ✓ {lesson.title} completed — pick another lesson or explore your site.
+            </p>
+          )}
 
           {unlockedFeatures.length > 0 && (
             <div>
@@ -142,31 +161,42 @@ export function LearnWorkspace() {
         </aside>
 
         <main className="flex-1 flex flex-col min-w-0">
-          {lesson && currentStep ? (
+          {lesson && (currentStep || isLessonComplete) ? (
             <>
               <div className="px-6 pt-6 pb-4 border-b border-neutral-200 bg-white">
                 <div className="flex items-start justify-between gap-4 max-w-4xl">
                   <div>
-                    <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {lesson.title} · Step {activeStepIndex + 1} of {lesson.steps.length}
-                    </div>
-                    <h2 className="text-lg font-semibold text-neutral-900">{currentStep.title}</h2>
-                    <p className="text-sm text-neutral-500 mt-1 leading-relaxed max-w-2xl">{currentStep.instruction}</p>
+                    {currentStep ? (
+                      <>
+                        <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {lesson.title} · Step {activeStepIndex + 1} of {lesson.steps.length}
+                        </div>
+                        <h2 className="text-lg font-semibold text-neutral-900">{currentStep.title}</h2>
+                        <p className="text-sm text-neutral-500 mt-1 leading-relaxed max-w-2xl">{currentStep.instruction}</p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-lg font-semibold text-neutral-900">{lesson.title}</h2>
+                        <p className="text-sm text-neutral-500 mt-1">Review mode — this lesson is complete. Explore the CMS Studio freely.</p>
+                      </>
+                    )}
                   </div>
-                  <span className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-500 rounded-full whitespace-nowrap">
-                    Use the {currentStep.studioView.replace("-", " ")} tab →
-                  </span>
+                  {currentStep && (
+                    <span className="text-[10px] px-2 py-1 bg-neutral-100 text-neutral-500 rounded-full whitespace-nowrap">
+                      {currentStep.studioView.replace(/-/g, " ")} tab →
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex-1 p-6 overflow-hidden">
                 <div className="h-full max-h-[calc(100vh-180px)]">
-                  <CMSStudio onAction={checkStep} />
+                  <CMSStudio onAction={checkStep} expectedAction={currentStep?.action} />
                 </div>
               </div>
             </>
-          ) : (
+          ) : showMastery ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-20">
                 <p className="text-4xl mb-4">🏆</p>
@@ -179,6 +209,10 @@ export function LearnWorkspace() {
                   Explore Your Website <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-neutral-400 text-sm">Select a lesson from the sidebar to begin.</p>
             </div>
           )}
         </main>

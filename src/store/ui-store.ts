@@ -13,7 +13,7 @@ import type {
   WebsiteFeature,
   WebsiteTheme,
 } from "@/modules/cms/types";
-import { getUnlockedFeatures, getLesson } from "@/modules/lessons/lesson-definitions";
+import { getUnlockedFeatures, getLesson, getNextLesson } from "@/modules/lessons/lesson-definitions";
 
 interface UIState {
   // Connection — required before learning
@@ -126,16 +126,20 @@ export const useUIStore = create<UIState>()(
 
       apiEvents: [],
 
-      connect: (config, stats) =>
+      connect: (config, stats) => {
+        const state = get();
+        const isFirstConnect = !state.completedLessons.length && !state.activeLessonSlug;
         set({
           isConnected: true,
           cmsConfig: config,
           connectionStats: stats,
           connectionError: null,
           viewMode: "learn",
-          activeLessonSlug: "content-types",
-          activeStepIndex: 0,
-        }),
+          ...(isFirstConnect
+            ? { activeLessonSlug: "content-types", activeStepIndex: 0 }
+            : {}),
+        });
+      },
 
       disconnect: () =>
         set({
@@ -146,6 +150,15 @@ export const useUIStore = create<UIState>()(
           unlockedFeatures: [],
           completedLessons: [],
           activeLessonSlug: null,
+          activeStepIndex: 0,
+          xp: 0,
+          earnedBadges: [],
+          schemaFields: [],
+          userRole: "admin",
+          apiEvents: [],
+          showUnlockCelebration: false,
+          editingEntryId: null,
+          selectedEntryId: null,
         }),
 
       setConnecting: (v) => set({ isConnecting: v }),
@@ -177,6 +190,7 @@ export const useUIStore = create<UIState>()(
         const completed = get().completedLessons.includes(slug)
           ? get().completedLessons
           : [...get().completedLessons, slug];
+        const next = getNextLesson(completed);
         set({
           xp: get().xp + xp,
           earnedBadges: get().earnedBadges.includes(badge) ? get().earnedBadges : [...get().earnedBadges, badge],
@@ -184,7 +198,10 @@ export const useUIStore = create<UIState>()(
           unlockedFeatures: getUnlockedFeatures(completed),
           showUnlockCelebration: true,
           lastUnlockMessage: message,
-          viewMode: "explore",
+          activeLessonSlug: next?.slug ?? null,
+          activeStepIndex: 0,
+          viewMode: unlocks.length > 0 ? "explore" : "learn",
+          ...(next ? { activeStudioView: next.steps[0]?.studioView ?? "editor" } : {}),
         });
       },
 
@@ -219,14 +236,7 @@ export const useUIStore = create<UIState>()(
       skipHydration: true,
       partialize: (s) => ({
         isConnected: s.isConnected,
-        cmsConfig: s.cmsConfig
-          ? {
-              provider: s.cmsConfig.provider,
-              projectId: s.cmsConfig.projectId,
-              dataset: s.cmsConfig.dataset,
-              apiUrl: s.cmsConfig.apiUrl,
-            }
-          : null,
+        cmsConfig: s.cmsConfig,
         connectionStats: s.connectionStats,
         activeTheme: s.activeTheme,
         completedLessons: s.completedLessons,

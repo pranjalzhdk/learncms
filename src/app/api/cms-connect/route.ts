@@ -37,9 +37,10 @@ export async function POST(request: Request) {
       message: `Connected to ${config.provider} — ${entries.length} entries, ${categories.size} categories`,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Connection failed" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "Connection failed";
+    const friendly = msg.includes("postgresql://") || msg.includes("postgres://")
+      ? "Database not configured. Set DATABASE_URL to your Postgres connection string (e.g. from Neon)."
+      : msg;
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }

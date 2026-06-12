@@ -29,12 +29,12 @@ export function ConnectPage() {
 
   const [activeProvider, setActiveProvider] = useState<CMSProviderType | null>(null);
   const [form, setForm] = useState<ProviderForm>(EMPTY_FORM);
-  const [success, setSuccess] = useState(false);
+  const [successProvider, setSuccessProvider] = useState<CMSProviderType | null>(null);
 
   const handleConnect = async (provider: CMSProviderType) => {
     setConnecting(true);
     setConnectionError(null);
-    setSuccess(false);
+    setSuccessProvider(null);
 
     const config = {
       provider,
@@ -46,7 +46,7 @@ export function ConnectPage() {
 
     try {
       const result = await validateCMSConnection(config);
-      setSuccess(true);
+      setSuccessProvider(provider);
       setTimeout(() => connect(config, result.stats), 1200);
     } catch (e) {
       setConnectionError(e instanceof Error ? e.message : "Connection failed");
@@ -96,7 +96,13 @@ export function ConnectPage() {
                   "rounded-2xl border bg-white transition-all cursor-pointer",
                   isActive ? "border-neutral-900 shadow-lg col-span-1 sm:col-span-2 lg:col-span-1 ring-1 ring-neutral-900" : "border-neutral-200 hover:border-neutral-300 hover:shadow-sm"
                 )}
-                onClick={() => !isActive && setActiveProvider(provider)}
+                onClick={() => {
+                  if (!isActive) {
+                    setActiveProvider(provider);
+                    setSuccessProvider(null);
+                    setConnectionError(null);
+                  }
+                }}
               >
                 <div className="p-5">
                   <div className="flex items-center gap-3 mb-3">
@@ -137,9 +143,9 @@ export function ConnectPage() {
                             className="w-full text-sm px-3 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
                           />
                         )}
-                        {(provider === "strapi" || provider === "custom") && (
+                        {(provider === "strapi" || provider === "custom" || provider === "hygraph") && (
                           <input
-                            placeholder="API URL"
+                            placeholder={provider === "hygraph" ? "Hygraph GraphQL URL" : "API URL"}
                             value={form.apiUrl}
                             onChange={(e) => setForm({ ...form, apiUrl: e.target.value })}
                             className="w-full text-sm px-3 py-2 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
@@ -162,7 +168,7 @@ export function ConnectPage() {
                         >
                           {isConnecting ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : success ? (
+                          ) : successProvider === provider ? (
                             <>
                               <Check className="w-4 h-4" /> Connected!
                             </>

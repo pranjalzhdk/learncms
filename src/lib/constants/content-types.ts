@@ -34,7 +34,7 @@ export const CONTENT_TYPES: ContentTypeDef[] = [
     slug: "blog-posts",
     icon: "📝",
     description: "Articles with title, body, author, and publish status",
-    fields: ["title", "slug", "author", "image", "content", "category", "status"],
+    fields: ["title", "slug", "author", "image", "content", "category", "status", "locale", "readingTime"],
   },
   {
     id: "products",

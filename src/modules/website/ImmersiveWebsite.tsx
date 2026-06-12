@@ -127,7 +127,7 @@ export function ImmersiveWebsite() {
         >
           {!hasFeature(unlockedFeatures, "blog-homepage") ? (
             <div className="flex items-center justify-center h-full text-neutral-400">
-              Complete &quot;Create a Blog Post&quot; to unlock your website
+              Complete &quot;Create Content&quot; to unlock your website
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full">Loading your website...</div>

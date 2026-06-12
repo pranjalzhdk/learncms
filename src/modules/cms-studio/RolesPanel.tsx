@@ -2,6 +2,7 @@
 
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
+import { actionMatchesStep } from "@/lib/lesson-actions";
 
 const ROLES = [
   { id: "admin" as const, name: "Admin", desc: "Full access — create, edit, publish, delete, manage schema", permissions: ["create", "edit", "publish", "delete", "schema", "users"] },
@@ -9,9 +10,20 @@ const ROLES = [
   { id: "viewer" as const, name: "Viewer", desc: "Read-only access — cannot modify content", permissions: ["read"] },
 ];
 
-export function RolesPanel({ onAction }: { onAction?: (action: string) => void }) {
+export function RolesPanel({
+  onAction,
+  expectedAction,
+}: {
+  onAction?: (action: string) => void;
+  expectedAction?: string;
+}) {
   const userRole = useUIStore((s) => s.userRole);
   const setUserRole = useUIStore((s) => s.setUserRole);
+
+  const fire = (action: string) => {
+    if (expectedAction && !actionMatchesStep(expectedAction, action)) return;
+    onAction?.(action);
+  };
 
   return (
     <div className="space-y-4">
@@ -25,8 +37,9 @@ export function RolesPanel({ onAction }: { onAction?: (action: string) => void }
             key={role.id}
             onClick={() => {
               setUserRole(role.id);
-              onAction?.("explore-roles");
-              if (role.id === "viewer") onAction?.("change-role");
+              if (expectedAction === "explore-roles") {
+                fire("explore-roles");
+              }
             }}
             className={cn(
               "w-full text-left p-4 rounded-xl border transition-colors",
@@ -46,6 +59,12 @@ export function RolesPanel({ onAction }: { onAction?: (action: string) => void }
           </button>
         ))}
       </div>
+
+      {userRole === "viewer" && expectedAction === "change-role" && (
+        <p className="text-xs text-neutral-500 bg-neutral-50 px-3 py-2 rounded-lg">
+          Now switch to the Editor tab and try editing a field — that completes this step.
+        </p>
+      )}
     </div>
   );
 }

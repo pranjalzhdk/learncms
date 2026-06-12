@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useContent } from "@/hooks/use-content";
+import { useUIStore } from "@/store/ui-store";
 import { LiveEventPanel } from "@/modules/api/LiveEventPanel";
 
 function highlightJson(json: string) {
   return json
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/"([^"]+)":/g, '<span class="text-violet-600">"$1"</span>:')
     .replace(/: "([^"]*)"/g, ': <span class="text-emerald-600">"$1"</span>')
     .replace(/: (\d+)/g, ': <span class="text-amber-600">$1</span>')
@@ -14,18 +18,36 @@ function highlightJson(json: string) {
 
 export function APIInspectorPanel({ onAction }: { onAction?: (action: string) => void }) {
   const { data, isLoading } = useContent();
+  const schemaFields = useUIStore((s) => s.schemaFields);
+
+  useEffect(() => {
+    onAction?.("inspect-api");
+  }, [onAction]);
 
   const response = useMemo(() => ({
-    data: data?.map((e) => ({
-      id: e.id, title: e.title, slug: e.slug, author: e.author,
-      published: e.status === "PUBLISHED", category: e.category,
-      locale: e.locale, readingTime: e.readingTime, image: e.image,
-    })),
+    data: data?.map((e) => {
+      const base: Record<string, unknown> = {
+        id: e.id,
+        title: e.title,
+        slug: e.slug,
+        author: e.author,
+        published: e.status === "PUBLISHED",
+        category: e.category,
+        locale: e.locale,
+        readingTime: e.readingTime,
+        image: e.image,
+      };
+      schemaFields.forEach((f) => {
+        base[f.slug] = null;
+      });
+      return base;
+    }),
     meta: { total: data?.length ?? 0, endpoint: "GET /api/content" },
-  }), [data]);
+    ...(schemaFields.length ? { schemaExtensions: schemaFields.map((f) => f.slug) } : {}),
+  }), [data, schemaFields]);
 
   return (
-    <div className="space-y-4" onFocus={() => onAction?.("inspect-api")}>
+    <div className="space-y-4">
       <p className="text-xs text-neutral-500">
         The API layer exposes CMS content as JSON. Any frontend — web, mobile, IoT — fetches from these endpoints. No CMS UI needed on the consumer side.
       </p>

@@ -3,14 +3,24 @@
 import { CONTENT_TYPES } from "@/lib/constants/content-types";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
+import { actionMatchesStep } from "@/lib/lesson-actions";
 
-export function ContentTypesPanel({ onAction }: { onAction?: (action: string) => void }) {
+export function ContentTypesPanel({
+  onAction,
+  expectedAction,
+}: {
+  onAction?: (action: string) => void;
+  expectedAction?: string;
+}) {
   const selected = useUIStore((s) => s.selectedContentType);
   const setSelected = useUIStore((s) => s.setSelectedContentType);
-  const markExplored = useUIStore((s) => s.markExploredTypes);
-  const markSchema = useUIStore((s) => s.markInspectedSchema);
 
   const selectedType = CONTENT_TYPES.find((t) => t.id === selected);
+
+  const fire = (action: string) => {
+    if (expectedAction && !actionMatchesStep(expectedAction, action)) return;
+    onAction?.(action);
+  };
 
   return (
     <div className="space-y-4">
@@ -23,11 +33,10 @@ export function ContentTypesPanel({ onAction }: { onAction?: (action: string) =>
             key={type.id}
             onClick={() => {
               setSelected(type.id);
-              markExplored();
-              onAction?.("explore-types");
-              if (type.id === "blog-posts") {
-                markSchema();
-                onAction?.("inspect-schema");
+              if (expectedAction === "explore-types") {
+                fire("explore-types");
+              } else if (expectedAction === "inspect-schema" && type.id === "blog-posts") {
+                fire("inspect-schema");
               }
             }}
             className={cn(
