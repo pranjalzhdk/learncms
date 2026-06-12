@@ -57,6 +57,11 @@ interface UIState {
   // Live API events
   apiEvents: ApiLiveEvent[];
 
+  // Playground panels
+  panelLearnOpen: boolean;
+  panelTerminalOpen: boolean;
+  previewFullscreen: boolean;
+
   // Actions
   connect: (config: CMSConnectionConfig, stats: ConnectionStats) => void;
   disconnect: () => void;
@@ -87,6 +92,10 @@ interface UIState {
 
   logApiEvent: (event: Omit<ApiLiveEvent, "id" | "timestamp">) => void;
   clearApiEvents: () => void;
+
+  togglePanelLearn: () => void;
+  togglePanelTerminal: () => void;
+  setPreviewFullscreen: (v: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -125,6 +134,10 @@ export const useUIStore = create<UIState>()(
       hasInspectedApi: false,
 
       apiEvents: [],
+
+      panelLearnOpen: true,
+      panelTerminalOpen: true,
+      previewFullscreen: false,
 
       connect: (config, stats) => {
         const state = get();
@@ -200,7 +213,7 @@ export const useUIStore = create<UIState>()(
           lastUnlockMessage: message,
           activeLessonSlug: next?.slug ?? null,
           activeStepIndex: 0,
-          viewMode: unlocks.length > 0 ? "explore" : "learn",
+          viewMode: "learn",
           ...(next ? { activeStudioView: next.steps[0]?.studioView ?? "editor" } : {}),
         });
       },
@@ -230,6 +243,10 @@ export const useUIStore = create<UIState>()(
         })),
 
       clearApiEvents: () => set({ apiEvents: [] }),
+
+      togglePanelLearn: () => set((s) => ({ panelLearnOpen: !s.panelLearnOpen })),
+      togglePanelTerminal: () => set((s) => ({ panelTerminalOpen: !s.panelTerminalOpen })),
+      setPreviewFullscreen: (v) => set({ previewFullscreen: v }),
     }),
     {
       name: "learncms-world",

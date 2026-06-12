@@ -36,7 +36,7 @@ export function CMSStudio({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
       <div className="flex border-b border-neutral-100 overflow-x-auto">
         {TABS.map((tab) => (
           <button
