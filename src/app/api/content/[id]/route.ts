@@ -3,6 +3,8 @@ import { createCMSProvider, parseCMSConfig } from "@/lib/cms/provider-factory";
 import { broadcastSync } from "@/lib/sync-bus";
 import type { UpdateContentInput } from "@/modules/cms/types";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

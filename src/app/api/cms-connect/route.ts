@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createCMSProvider } from "@/lib/cms/provider-factory";
 import type { CMSConnectionConfig, ConnectionStats } from "@/modules/cms/types";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT_SCHEMAS = [
   { name: "Blog Post", fields: ["title", "slug", "author", "image", "content", "category", "status", "locale"] },
   { name: "Media", fields: ["filename", "url", "mimeType", "alt"] },
