@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ContentEntry {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  author      String   @default("Sarah Chen")
+  image       String?
+  content     String   @default("")
+  category    String   @default("Getting Started")
+  status      String   @default("DRAFT")
+  locale      String   @default("en")
+  readingTime Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int      @default(0)
+  alt       String?
+  createdAt DateTime @default(now())
+}
+
+model CMSConnection {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  provider  String   @default("DEMO")
+  projectId String?
+  dataset   String?
+  apiToken  String?
+  apiUrl    String?
+  isActive  Boolean  @default(true)
+  config    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  sessionId   String
+  lessonSlug  String
+  currentStep Int      @default(0)
+  completed   Boolean  @default(false)
+  xp          Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sessionId, lessonSlug])
+}
+
+model Achievement {
+  id        String   @id @default(cuid())
+  sessionId String
+  badgeSlug String
+  earnedAt  DateTime @default(now())
+
+  @@unique([sessionId, badgeSlug])
+}

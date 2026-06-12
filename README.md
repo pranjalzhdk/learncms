@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LearnCMS — CMS-Powered World Builder
+
+Connect a real headless CMS, complete challenges, and watch an entire website evolve from the content you create.
+
+## Product Flow
+
+```
+Connect CMS → Complete Challenge → Unlock Website Layer → Explore Fullscreen → Return & Evolve
+```
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+npm run db:setup   # required for Demo Mode
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open **http://localhost:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Entry Point: Connect Your CMS
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The first screen is always **Connect Your CMS**. Supported providers:
 
-## Learn More
+- **Sanity** — Project ID, Dataset, API Token
+- **Contentful** — Space ID, API Token
+- **Strapi** — API URL, Token
+- **Hygraph** — GraphQL endpoint, Token
+- **Generic REST API** — Custom URL + Token
+- **Demo Mode** — Local SQLite database (optional, at bottom)
 
-To learn more about Next.js, take a look at the following resources:
+After connection you'll see: entry count, content types, schemas, last sync.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Website Evolution
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Each completed challenge unlocks new website capabilities:
 
-## Deploy on Vercel
+| Challenge | Unlocks |
+|-----------|---------|
+| Create a Blog Post | Blog homepage |
+| Media Management | Hero sections, gallery |
+| Categories | Filtering, navigation |
+| Authors | Author profiles |
+| Localization | Language switcher |
+| SEO | Metadata preview |
+| Content Modeling | Custom components |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+After each challenge → **fullscreen immersive website** with cinematic transition.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features
+
+- **6 Website Themes** — Same CMS data, different frontends (Startup, Magazine, Ecommerce, Portfolio, Travel, SaaS)
+- **Live API Events** — Real request/response payloads logged as you edit
+- **X-Ray Mode** — See CMS field → JSON → rendered component
+- **Real persistence** — Demo mode uses SQLite; external CMS uses live APIs
+- **Cross-browser sync** — SSE broadcasts content changes
+
+## Architecture
+
+```
+CMS (Real API / SQLite)
+  ↓
+/api/content (CRUD)
+  ↓
+React Query (server state)
+  ↓
+Learn Workspace + Immersive Website
+
+Zustand = UI only (connection, lessons, unlocks, theme, x-ray)
+```
+
+## Modules
+
+- `ConnectPage` — CMS connection entry
+- `LearnWorkspace` — Challenge-driven editing
+- `ImmersiveWebsite` — Fullscreen evolving website
+- `LiveEventPanel` — Real API flow log
+- `XRayOverlay` — Architecture visualization
